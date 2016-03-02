@@ -9,7 +9,7 @@
 #FDS will also contain a time component which allows it to store historical data as 
 #Required by the algorithms implemented by the operators system.
 
-module FDTD 
+module OppFDTD 
 
 export simulate
 
@@ -20,10 +20,10 @@ using operators
 #FDS is the Field Data Structure, it holds all of the information about the field
 #simulator, is the operator that updates the FDS for each timestep
 function simulate(steps::Int64, sampleRate::Int8, FDS::Array{Float64}, simulator::operator)
-	for t=1:steps#The integer time step. The way the algorithm increments including the time step size is set in the simulator operator
-		for i=0:size(FDS,1)#The x spacial coordinate
-			for j=0:size(FDS,2)#The y spacial coordinate
-				for k=0:size(FDS,3)#The z spacial coordinate
+	for t=0:steps#The integer time step. The way the algorithm increments including the time step size is set in the simulator operator
+		for i=1:size(FDS,1)#The x spacial coordinate
+			for j=1:size(FDS,2)#The y spacial coordinate
+				for k=1:size(FDS,3)#The z spacial coordinate
 					applyOperator!(i,j,k,t,simulator,FDS)#Applys the simulator operator to FDS, the operator type definition is found in operators.jl
 					#The simulator operator is found in a separate file that is included in a particular simulation run.
 					if mod(t,sampleRate)==0#Checks to see if it is time to save an FDS snapshot to disk

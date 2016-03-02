@@ -1,37 +1,32 @@
 #TEMOperators.jl
 #This file contains the operator definitions for a 2D TEM simulation using YEE's algorithm
-#For YEE'S algorithm the structure of the FDS is as follows (x,y,z,t,{E=1 H=2}, xyzdim)
+#For YEE'S algorithm the structure of the FDS is as follows (x,y,z,t,xyzdim)
 #BC is structured as follows for OH BC(i,j,k,t)=(epsilon, mu, magfieldLoss, sigma)
-dx=.01
-dy=.01
-dz=.01
-dt=.001
 
-#Gets the parameter
-function getParam(i,j,k,t,)
-
-function OH(i,j,k,t,FDS,BC)=
-	modT=mod(t,size(FDS,4))#Finds the current index we should be on.
+#HSTEP increments the current i,j,k,t location by 
+function HStep(i,j,k,t,FDS,BC)
+	modT=mod(t,sizeFDS)+1#Finds the current index we should be on.
+	modTn=mod(t-1,sizeFDS)+1#Finds the 1/2 index in the past
 	sizeFDS=size(FDS,4)
 
-	Hxn=FDS(i,j,k,mod(t-2,sizeFDS),2,1)
-	Hyn=FDS(i,j,k,mod(t-2,sizeFDS),2,2)
-	Hzn=FDS(i,j,k,mod(t-2,sizeFDS),2,3)
+	Hxn=FDS(i,j,k,modT,1)
+	Hyn=FDS(i,j,k,modT,2)
+	Hzn=FDS(i,j,k,modT,3)
 
-	Eyz=FDS(i,j,k+1,mod(t-1,sizeFDS),1,2)
-	Eynz=FDS(i,j,k-1, mod(t-1,sizeFDS),1,2)
-	Ezy=FDS(i,j+1,k, mod(t-1,sizeFDS),1,3)
-	Ezny=FDS(i,j-1,k, mod(t-1,sizeFDS),1,3)
-	Ezx=FDS(i+1,j,k, mod(t-1,sizeFDS),1,3)
-	Eznx=FDS(i-1,j-1,k, mod(t-1,sizeFDS),1,3)
-	Eyz=FDS(i,j,k+1,mod(t-1,sizeFDS),1,1)
-	Eynz=FDS(i,j,k-1, mod(t-1,sizeFDS),1,1)
-	Exz=FDS(i,j,k+1,mod(t-1,sizeFDS),1,1)
-	Exnz=FDS(i,j,k-1, mod(t-1,sizeFDS),1,1)
-	Exy=FDS(i,j+1,k ,mod(t-1,sizeFDS),1,1)
-	Exny=FDS(i,j-1,k, mod(t-1,sizeFDS),1,1)
-	Eyx=FDS(i+1,j,k, mod(t-1,sizeFDS),1,2)
-	Eynx=FDS(i-1,j-1,k, mod(t-1,sizeFDS),1,2)
+	Eyz=FDS(i,j,k+1,modTn,2)
+	Eynz=FDS(i,j,k-1, modTn,2)
+	Ezy=FDS(i,j+1,k, modTn,3)
+	Ezny=FDS(i,j-1,k, modTn,3)
+	Ezx=FDS(i+1,j,k, modTn,3)
+	Eznx=FDS(i-1,j-1,k, modTn,3)
+	Eyz=FDS(i,j,k+1,modTn,1)
+	Eynz=FDS(i,j,k-1, moTn,1)
+	Exz=FDS(i,j,k+1,modTn,1)
+	Exnz=FDS(i,j,k-1, modTn),1)
+	Exy=FDS(i,j+1,k ,modTn,1)
+	Exny=FDS(i,j-1,k, modTn,1)
+	Eyx=FDS(i+1,j,k, modTn,2)
+	Eynx=FDS(i-1,j-1,k, modTn,2)
 
 	mloss=BC(i,j,k,t)[3]
 	mu=BC(i,j,k,t)[2]
@@ -43,32 +38,34 @@ function OH(i,j,k,t,FDS,BC)=
 	Hz=A*Hzn + B*(((Exy-Ezny)/dy)-((Eyx-Eynx)/dz))
  
 
-	FDS(i,j,k,modT,2,1)=Hx
-	FDS(i,j,k,modT,2,2)=Hy
-	FDS(i,j,k,modT,2,3)=Hz
+	FDS(i,j,k,modT,1)=Hx
+	FDS(i,j,k,modT,2)=Hy
+	FDS(i,j,k,modT,3)=Hz
+end
 
-function OE(i,j,k,t,FDS,BC)=
-	modT=mod(t,size(FDS,4))#Finds the current index we should be on.
+function EStep(i,j,k,t,FDS,BC)	
 	sizeFDS=size(FDS,4)
+	modT=mod(t,sizeFDS)+1#Finds the current index we should be on.
+	moTn=mod(t-1,sizeFDS)+1#Finds the opposite time step which is 1/2 timestep in the past.
 
-	Exn=FDS(i,j,k,mod(t-2,sizeFDS),1,1)
-	Eyn=FDS(i,j,k,mod(t-2,sizeFDS),1,2)
-	Ezn=FDS(i,j,k,mod(t-2,sizeFDS),1,3)
+	Exn=FDS(i,j,k,modT,1)#The current time
+	Eyn=FDS(i,j,k,modT,2)
+	Ezn=FDS(i,j,k,modT,3)
 
-	Hyz=FDS(i,j,k+1,mod(t-1,sizeFDS),2,2)
-	Hynz=FDS(i,j,k-1, mod(t-1,sizeFDS),2,2)
-	Hzy=FDS(i,j+1,k, mod(t-1,sizeFDS),2,3)
-	Hzny=FDS(i,j-1,k, mod(t-1,sizeFDS),2,3)
-	Hzx=FDS(i+1,j,k, mod(t-1,sizeFDS),2,3)
-	Hznx=FDS(i-1,j-1,k, mod(t-1,sizeFDS),2,3)
-	Hyz=FDS(i,j,k+1,mod(t-1,sizeFDS),2,1)
-	Hynz=FDS(i,j,k-1, mod(t-1,sizeFDS),2,1)
-	Hxz=FDS(i,j,k+1,mod(t-1,sizeFDS),2,1)
-	Hxnz=FDS(i,j,k-1, mod(t-1,sizeFDS),2,1)
-	Hxy=FDS(i,j+1,k ,mod(t-1,sizeFDS),2,1)
-	Hxny=FDS(i,j-1,k, mod(t-1,sizeFDS),2,1)
-	Hyx=FDS(i+1,j,k, mod(t-1,sizeFDS),2,2)
-	Hynx=FDS(i-1,j-1,k, mod(t-1,sizeFDS),2,2)
+	Hyz=FDS(i,j,k+1,modTn,2)
+	Hynz=FDS(i,j,k-1, modTn,2)
+	Hzy=FDS(i,j+1,k, modTn,3)
+	Hzny=FDS(i,j-1,k, modTn,3)
+	Hzx=FDS(i+1,j,k, modTn,3)
+	Hznx=FDS(i-1,j-1,k,modTn,3)
+	Hyz=FDS(i,j,k+1,modTn,1)
+	Hynz=FDS(i,j,k-1, modTn,1)
+	Hxz=FDS(i,j,k+1,modTn,1)
+	Hxnz=FDS(i,j,k-1, modTn,1)
+	Hxy=FDS(i,j+1,k ,modTn,1)
+	Hxny=FDS(i,j-1,k, modTn,1)
+	Hyx=FDS(i+1,j,k, modTn,2)
+	Hynx=FDS(i-1,j-1,k, modTn,2)
 
 	sigma=BC(i,j,k,t)[4]
 	ep=BC(i,j,k,t)[1]
@@ -80,9 +77,28 @@ function OE(i,j,k,t,FDS,BC)=
 	Ey=A*Eyn+B*((-(Hzx-Hznx)/dx)+((Hxz-Hxnz)/dz))
 	Ez=A*Ezn + B*((-(Hxy-Hzny)/dy)+((Hyx-Hynx)/dz))
 
-	FDS(i,j,k,modT,1,1)=Ex
-	FDS(i,j,k,modT,1,2)=Ey
-	FDS(i,j,k,modT,1,3)=Ez
+	FDS(i,j,k,modT,1)=Ex
+	FDS(i,j,k,modT,2)=Ey
+	FDS(i,j,k,modT,3)=Ez
+end
 
-function masterOperator(i,j,k,FDS,BC)
+#
+function PECBoundary(i,j,k,t,FDS,BC)
+	modT=mod(t,size(FDS,4))+1
+	if i==1 || i==size(FDS,1)
+		FDS(i,j,k,modT,2)=0
+		FDS(i,j,k,modT,3)=0
+	elseif j==1 || j==size(FDS,2)
+		FDS(i,j,k,modT,1)=0
+		FDS(i,j,k,modT,3)=0
+	elseif k==1 || k==size(FDS,3)
+		FDS(i,j,k,modT,1)=0
+		FDS(i,j,k,modT,3)=0
+
+function initTEOperator(OppBC,MatBC)
+	OH=operator(HStep,MatBC)
+	OE=operator(EStep,MatBC)
+	PEC=operator(PECBoundary,0)
+	return operator((OE, OH, PEC), OppBC)
+
 	
