@@ -1,16 +1,16 @@
-#PointInBox.jl
+#3DPointInBox.jl
 #This is a simulation of a hard source radiating in a box that is surrounded by a PEC
 #The hard source is a point. It simply varies the electric field according to a function in time.
-#The dimensions of the box are 10cm^3 
+#The dimensions of the box are 10cm^3
 
 dx=.01
 dy=.01
 dz=.01
 dt=.001
-include(TEMOperators)#Correct later!
+
 using OppFDTD
 
-function OppBC(i,j,k,t)
+function OppBC(dim)
 	#Implement operator BC 
 
 function MatBC(i,j,k,t)
