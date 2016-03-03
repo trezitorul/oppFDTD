@@ -1,13 +1,14 @@
-#2DOperators.jl
-
-#TEMOperators.jl
-#This file contains the operator definitions for a 2D TEM simulation using YEE's algorithm
+#2DOperatorsTM.jl
+#This file contains the operator definitions for a 2D TM simulation using YEE's algorithm
 #For YEE'S algorithm the structure of the FDS is as follows (x,y,z=1,t,xyzdim)
 #BC is structured as follows for OH BC(i,j,k=1,t)=(epsilon, mu, magfieldLoss, sigma)
 #This is built around Yee's FDTD algorithm and time stepping.
 #HSTEP increments the current i,j,k,t location by
 
-#Decided to add a comment
+#This function computes the HField at the next time step and updates the FDS to reflect this change.
+#i,j,k,t are all integer arguments, these are the space-time coordinates of the location in FDS being acted on.
+#FDS is the field data structure. It has the following structure FDS[i,j,k,t,parameterxyzdim] 
+#BC is the BC set in the operator calling HSTEP. HSTEP expects BC_ijk=(epsilon,mu,magloss,sigma)
 function HStep(i,j,k,t,FDS,BC)
 	sizeFDS=size(FDS,4)
 	modT=mod(t,sizeFDS)+1#Finds the current index we should be on.

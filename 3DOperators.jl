@@ -81,30 +81,8 @@ function EStep(i,j,k,t,FDS,BC)
 	FDS(i,j,k,modT,3)=Ez
 end
 
-#EM Wall can either be a PMC or PEC depending on the boundary condition. 
-#If the wall is executed on odd time steps (1/2 time steps) and on even spacial steps then it will act as PMC
-#If the wall is executed on even time steps (integer time steps) and on odd spacial steps then it will be a PEC
-function EMWall(i,j,k,t,FDS,BC)
-	modT=mod(t,size(FDS,4))+1
-		if i==1 || i==size(FDS,1)
-			FDS(i,j,k,modT,2)=0
-			FDS(i,j,k,modT,3)=0
-		elseif j==1 || j==size(FDS,2)
-			FDS(i,j,k,modT,1)=0
-			FDS(i,j,k,modT,3)=0
-		elseif k==1 || k==size(FDS,3)
-			FDS(i,j,k,modT,1)=0
-			FDS(i,j,k,modT,2)=0
-end 
-
-#This operation does nothing. It is used if you want to avoid making any changes on the FDS
-function Identity(i,j,k,t, FDS, BC)
-	return 0
-end
-
 function initTEOperator(OppBC,MatBC)
 	OH=operator(HStep,MatBC)
 	OE=operator(EStep,MatBC)
-	PEC=operator(PECBoundary,0)
-	return operator((OE, OH, EMWall, Identity), OppBC)
+	return operator((Identity, OE, OH), OppBC)
 end

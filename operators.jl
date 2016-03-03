@@ -27,4 +27,21 @@ function applyOperator!(i,j,k,t,opp::function, FDS)#If we get to a base class of
 	#This terminates the hierarchical recursive operator structure. 
 end
 
+#EM Wall can either be a PMC or PEC depending on the boundary condition.
+#If the wall is executed on odd time steps (1/2 time steps) and on even spacial steps then it will act as PMC
+#If the wall is executed on even time steps (integer time steps) and on odd spacial steps then it will be a PEC
+#Both the PEC and PML essentially set the parallel components of the field equal to 0. 
+#BC gives the index of the normal direction. This function then sets all of the parallel components equal to zero. 
+#The location and operation of this function is dictated by the master operator BC.
+function EMWall(i,j,k,t,FDS,BC)
+	modT=mod(t,size(FDS,4))+1
+ 		for a=1:sizeFDS(5)
+ 			if a!=BC
+				FDS(i,j,k,modT,a)=0
+			end
+end
 
+#This is the identity operation. It does not modify the FDS in anyway.
+function Identity(i,j,k,t, FDS, BC)
+	return 0
+end
