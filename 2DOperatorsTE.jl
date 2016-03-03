@@ -1,7 +1,7 @@
-#2DOperators.jl
+#2DOperatorsTE.jl
 
-#TEMOperators.jl
-#This file contains the operator definitions for a 2D TEM simulation using YEE's algorithm
+#TEOperators.jl
+#This file contains the operator definitions for a 2D TE simulation using YEE's algorithm
 #For YEE'S algorithm the structure of the FDS is as follows (x,y,z=1,t,xyzdim)
 #BC is structured as follows for OH BC(i,j,k=1,t)=(epsilon, mu, magfieldLoss, sigma)
 #This is built around Yee's FDTD algorithm and time stepping.
@@ -11,6 +11,10 @@
 #i,j,k,t are all integer arguments, these are the space-time coordinates of the location in FDS being acted on.
 #FDS is the field data structure. It has the following structure FDS[i,j,k,t,parameterxyzdim] 
 #BC is the BC set in the operator calling HSTEP. HSTEP expects BC_ijk=(epsilon,mu,magloss,sigma)
+
+module 2DTE 
+include("operators.jl")
+export HStep, EStep, initOperator
 function HStep(i,j,k,t,FDS,BC)
 	sizeFDS=size(FDS,4)#This is the number of time steps that FDS contains (Yee's algorithm only requires 2 previous steps t-1/2 and t-1)
 	modT=mod(t,sizeFDS)+1#The current cyclical timestep to access in FDS (for yee will be either 1 or 2)
@@ -41,6 +45,7 @@ function HStep(i,j,k,t,FDS,BC)
 
 	FDS(i,j,k,modT,3)=Hz#inplace overwrite of the old Hz value stored in FDS
 end
+
 #This function computes the n+1 Efield values and updates them inplace in the FDS.
 #i,j,k,t are the spacetime coordinates for the FDS index being updated. 
 #FDS is the field data structure. It has the following structure FDS[i,j,k,t,parameterxyzdim] 
@@ -86,8 +91,9 @@ end
 #While MatBC is also an indexed function which takes in i,j,k,t and returns the material properties at that index
 #It returns a tuple of the form (epp, mu, magloss, sigma) 
 #NOTICE, this initializer just creates a master operator, but it does not contain the EMWall or the Identity operator. 
-function initTEOperator(OppBC,MatBC)
+function initOperator(OppBC,MatBC)
 	OH=operator(HStep,MatBC)#This is the H Field calculating operator
 	OE=operator(EStep,MatBC)#This is the E Field calculating operator, they apply the Steps given above.
 	return operator([OE, OH], OppBC)
+end
 end

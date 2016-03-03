@@ -1,6 +1,6 @@
 #operator.jl
 #This file contains the operator type definitions and base functions
-
+export applyOperator!, EMWall, Identity
 type operator
 #each concrete subtype of operator should implement the following methods
 #BC::Function, returns value of transform type to be used. 

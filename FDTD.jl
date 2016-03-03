@@ -9,7 +9,7 @@
 #FDS will also contain a time component which allows it to store historical data as 
 #Required by the algorithms implemented by the operators system.
 
-module FDTD 
+module OppFDTD 
 
 export simulate
 

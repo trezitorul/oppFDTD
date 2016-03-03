@@ -5,7 +5,10 @@
 #This is built around Yee's FDTD algorithm and time stepping.
 #HSTEP increments the current i,j,k,t location by 
 
-
+#TODO COMMENT CODE FOR 3D OPERATORS
+module 3DOpp
+export HStep, EStep, initOperator
+include("operators.jl")
 function HStep(i,j,k,t,FDS,BC)
 	sizeFDS=size(FDS,4)
 	modT=mod(t,sizeFDS)+1#Finds the current index we should be on.
@@ -81,8 +84,8 @@ function EStep(i,j,k,t,FDS,BC)
 	FDS(i,j,k,modT,3)=Ez
 end
 
-function initTEOperator(OppBC,MatBC)
+function initOperator(OppBC,MatBC)
 	OH=operator(HStep,MatBC)
 	OE=operator(EStep,MatBC)
-	return operator((Identity, OE, OH), OppBC)
+	return operator([Identity,OE, OH], OppBC)
 end
