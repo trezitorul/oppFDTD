@@ -1,13 +1,18 @@
+#2DOperators.jl
+
 #TEMOperators.jl
 #This file contains the operator definitions for a 2D TEM simulation using YEE's algorithm
-#For YEE'S algorithm the structure of the FDS is as follows (x,y,z,t,xyzdim)
-#BC is structured as follows for OH BC(i,j,k,t)=(epsilon, mu, magfieldLoss, sigma)
-
+#For YEE'S algorithm the structure of the FDS is as follows (x,y,z=1,t,xyzdim)
+#BC is structured as follows for OH BC(i,j,k=1,t)=(epsilon, mu, magfieldLoss, sigma)
+#This is built around Yee's FDTD algorithm and time stepping.
 #HSTEP increments the current i,j,k,t location by 
+
+
 function HStep(i,j,k,t,FDS,BC)
+	sizeFDS=size(FDS,4)
 	modT=mod(t,sizeFDS)+1#Finds the current index we should be on.
 	modTn=mod(t-1,sizeFDS)+1#Finds the 1/2 index in the past
-	sizeFDS=size(FDS,4)
+
 
 	Hxn=FDS(i,j,k,modT,1)
 	Hyn=FDS(i,j,k,modT,2)
@@ -82,23 +87,30 @@ function EStep(i,j,k,t,FDS,BC)
 	FDS(i,j,k,modT,3)=Ez
 end
 
-#
-function PECBoundary(i,j,k,t,FDS,BC)
+#EM Wall can either be a PMC or PEC depending on the boundary condition. 
+#If the wall is executed on odd time steps (1/2 time steps) and on even spacial steps then it will act as PMC
+#If the wall is executed on even time steps (integer time steps) and on odd spacial steps then it will be a PEC
+function EMWall(i,j,k,t,FDS,BC)
 	modT=mod(t,size(FDS,4))+1
-	if i==1 || i==size(FDS,1)
-		FDS(i,j,k,modT,2)=0
-		FDS(i,j,k,modT,3)=0
-	elseif j==1 || j==size(FDS,2)
-		FDS(i,j,k,modT,1)=0
-		FDS(i,j,k,modT,3)=0
-	elseif k==1 || k==size(FDS,3)
-		FDS(i,j,k,modT,1)=0
-		FDS(i,j,k,modT,3)=0
+		if i==1 || i==size(FDS,1)
+			FDS(i,j,k,modT,2)=0
+			FDS(i,j,k,modT,3)=0
+		elseif j==1 || j==size(FDS,2)
+			FDS(i,j,k,modT,1)=0
+			FDS(i,j,k,modT,3)=0
+		elseif k==1 || k==size(FDS,3)
+			FDS(i,j,k,modT,1)=0
+			FDS(i,j,k,modT,2)=0
+end 
+
+#This operation does nothing. It is used if you want to avoid making any changes on the FDS
+function Identity(i,j,k,t, FDS, BC)
+	return 0
+end
 
 function initTEOperator(OppBC,MatBC)
 	OH=operator(HStep,MatBC)
 	OE=operator(EStep,MatBC)
 	PEC=operator(PECBoundary,0)
-	return operator((OE, OH, PEC), OppBC)
-
-	
+	return operator((OE, OH, EMWall, Identity), OppBC)
+end
