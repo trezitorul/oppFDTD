@@ -1,6 +1,6 @@
 #operator.jl
 #This file contains the operator type definitions and base functions
-export applyOperator!, EMWall, Identity
+export applyOperator!, EMWall, Identity, hardSource
 type operator
 #each concrete subtype of operator should implement the following methods
 #BC::Function, returns value of transform type to be used. 
@@ -36,7 +36,7 @@ end
 function EMWall(i,j,k,t,FDS,BC)
 	modT=mod(t,size(FDS,4))+1
  		for a=1:sizeFDS(5)
- 			if a!=BC
+ 			if a!=BC(i,j,k,t)
 				FDS(i,j,k,modT,a)=0
 			end
 end
@@ -44,4 +44,10 @@ end
 #This is the identity operation. It does not modify the FDS in anyway.
 function Identity(i,j,k,t, FDS, BC)
 	return 0
+end
+
+function hardSource(i,j,k,t, FDS, BC)
+	FDS(i,j,k,t,1)=BC(i,j,k,t)
+	FDS(i,j,k,t,2)=BC(i,j,k,t)
+	FDS(i,j,k,t,3)=BC(i,j,k,t)
 end
