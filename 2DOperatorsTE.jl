@@ -19,13 +19,13 @@ function HStep(i,j,k,t,FDS,BC)
 	Hzn=FDS(i,j,k,modT,3)#The n-1/2 Hz value (is currently stored in FDS in the modT location)
 
 	#The following are the E values at the n timestep (IE the current timestep -1/2)
-	#The naming convention works as follows: Exy is the Ex value at one spacial step forward in the y direction. 
+	#The naming convention works as follows: Exy is the Ex value at 1/2 spacial step forward in the y direction. 
 	#(recall indices are 1/2 steps)
 	#Exny is the same as Exy it is just one index down in y
-	Exy=FDS(i,j+2,k,modTn,1)
-	Exny=FDS(i,j-2,k,modTn,1)
-	Eyx=FDS(i+2,j,k,modTn,2)
-	Eynx=FDS(i-2,j,k,modTn,2)
+	Exy=FDS(i,j+1,k,modTn,1)
+	Exny=FDS(i,j-1,k,modTn,1)
+	Eyx=FDS(i+1,j,k,modTn,2)
+	Eynx=FDS(i-1,j,k,modTn,2)
 
 	#BC=(epp, mu, magloss, sigma)
 	mloss=BC(i,j,k,t)[3]
@@ -57,10 +57,10 @@ function EStep(i,j,k,t,FDS,BC)
 	#The naming convention works as follows: Hxy is the Hx value at one spacial step forward in the y direction. 
 	#(recall indices are 1/2 steps)
 	#Hxny is the same as Hxy it is just one index down in y instead of one index up.
-	Hzx=FDS(i+2,j,k,modTn,3)
-	Hznx=FDS(i-2,j,k,modTn,3)
-	Hzy=FDS(i,j+2,k,modTn,3)
-	Hzny=FDS(i,j-2,k,modTn,3)
+	Hzx=FDS(i+1,j,k,modTn,3)
+	Hznx=FDS(i-1,j,k,modTn,3)
+	Hzy=FDS(i,j+1,k,modTn,3)
+	Hzny=FDS(i,j-1,k,modTn,3)
 
 	#BC=(epp, mu, magloss, sigma)
 	sigma=BC(i,j,k,t)[4]#Just creating some named variables to avoid errors
@@ -85,10 +85,9 @@ end
 #E.G. When is a particular operator applied as compared to another.
 #While MatBC is also an indexed function which takes in i,j,k,t and returns the material properties at that index
 #It returns a tuple of the form (epp, mu, magloss, sigma) 
-#NOTICE, this initializer just creates a master operator, but it does not contain the EMWall 
+#NOTICE, this initializer just creates a master operator, but it does not contain the EMWall or the Identity operator. 
 function initTEOperator(OppBC,MatBC)
 	OH=operator(HStep,MatBC)#This is the H Field calculating operator
 	OE=operator(EStep,MatBC)#This is the E Field calculating operator, they apply the Steps given above.
-	I=operator(I, 0)
-	return operator([I, OE, OH], OppBC)
+	return operator([OE, OH], OppBC)
 end
