@@ -9,9 +9,8 @@
 #i,j,k,t are all integer arguments, these are the space-time coordinates of the location in FDS being acted on.
 #FDS is the field data structure. It has the following structure FDS[i,j,k,t,parameterxyzdim] 
 #BC is the BC set in the operator calling HSTEP. HSTEP expects BC_ijk=(epsilon,mu,magloss,sigma,dx,dy,dz,dt)
-
-module 2DTM 
 include("operators.jl")
+module FlatTM 
 export HStep, EStep, initOperator
 function HStep(i,j,k,t,FDS,BC)
 	sizeFDS=size(FDS,4)#This is the number of time steps that FDS contains (Yee's algorithm only requires 2 previous steps t-1/2 and t-1)
@@ -67,9 +66,13 @@ function EStep(i,j,k,t,FDS,BC)
 	Hyx=FDS(i+1,j,k,modTn,2)
 	Hynx=FDS(i-1,j,k,modTn,2)
 
-	#BC=(epp, mu, magloss, sigma)
+	#BC=(epp, mu, magloss, sigma, dx, dy, dz, dt)
 	sigma=BC(i,j,k,t)[4]#Just creating some named variables to avoid errors
 	ep=BC(i,j,k,t)[1]
+	dx=BC(i,j,k,t)[5]
+	dy=BC(i,j,k,t)[6]
+	dz=BC(i,j,k,t)[7]
+	dt=BC(i,j,k,t)[8]
 	#These are the coefficients that are found in Yee's standard algorithm
 	#See Taflove pg. 72 for the algorithm and coefficients.
 	#Might consider putting these into a preprocessor or into a BC?

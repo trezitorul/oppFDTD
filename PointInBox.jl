@@ -2,46 +2,69 @@
 #This is a simulation of a hard source radiating in a box that is surrounded by a PEC
 #The hard source is a point. It simply varies the electric field according to a function in time.
 #The dimensions of the box are 10cm^3
+srcFreq=10000
+wavelength=2*pi/srcFreq
+dx=wavelength/10#m
+dy=wavelength/10
+dz=wavelength/10
+dt=1/((3*10^8)*sqrt(1/(dx^2)+1/(dy^2))) #magic timestep
+xSteps=500
+ySteps=500 
+zSteps=1
+tSteps=1000
+tDim = 2
+sampleRate=10
 
-dx=.01
-dy=.01
-dz=.01
-dt=.001
 
-using OppFDTD#This allows for access to the simulator
-using 2DTE#This brings in the 2DTE operators
+include("2DOperatorsTE.jl")
+using FlatTE#This allows for access to the simulator
+
+function sineSource(i,j,k,t,FDS,BC)#BC = (I,w, normal)S
+	modT=2
+	FDS[i,j,k,modT,2]=BC[1]*sin(BC[2]*t)
+	FDS[i,j,k,modT,1]=BC[1]*sin(BC[2]*t)
+end
 
 function createYee2DOperator(OppBC, MatBC)
-	OH=operator(2DTE.HStep, MatBC)
-	OE=operator(2DTE.EStep, MatBC)
-	I=operator(2DTE.Identity)
-	Wall=operator(2DTE, PECWallBC)
-	return operator((I,OE, OH, Wall))
+	OH=FlatTE.operator((FlatTE.HStep), MatBC)
+	OE=FlatTE.operator((FlatTE.EStep), MatBC)
+	I=FlatTE.operator((FlatTE.Identity),0)
+	Wall=FlatTE.operator((FlatTE.EMWall), PECWallBC)
+	sineSrc=FlatTE.operator((sineSource), (1,srcFreq,3))#BC for this source 
+	return FlatTE.operator((I,OE, OH, Wall, sineSrc),OppBC)
+end
 #OppBC for Yee's algorithm is as follows. Even steps are integer values, Odd Steps are half steps. 
 #This applies for both space and time domains.
 #By looking at
 function OppBC(i,j,k,t)
-	ret=0
+	ret=1
 	ret=generateYeeGrid(i,j,k,t,2,3,1)
-	if isWall(i,j,k,t)==True
+	if isWall(i,j,k,t)==true
 		ret=4
 	end
+	if i==1+floor((size(FDS,1)+1)/2)&&j==floor((size(FDS,2)+1)/2)&&mod(t,2)==0
+	 	ret = 5
+	 end
+	 return ret 
 end
-
-function isSource(i,j,k,t)
 	
-
 function generateYeeGrid(i,j,k,t,OEVal, OHVal, Identity)
-	istep=mod(i,2)&&size(FDS,1)>1
-	jstep=mod(j,2)&&size(FDS,2)>1
-	kstep=mod(j,2)&&size(FDS,3)>1
+	istep=mod(i,2)==1
+	jstep=mod(j,2)==1
 	ret = Identity
-	if istep==1&&jstep==1&&kstep==1&&mod(t+1,2)#If i,j,k are at half steps and t even
+	if (istep!=jstep)&&mod(t,2)==0#If i,j,k are at half steps and t even
+#	if (istep||jstep)&&mod(t+1,2)==1#If i,j,k are at half steps and t even
 		ret=OEVal#Compute the HStep on these points
-	elseif istep==0&&jstep==0&&kstep==0&&mod(t,2)#If i,j,k are at integer steps and t is odd 
+	elseif (istep==jstep)&&mod(t,2)==1#If i,j,k are at integer steps and t is odd 
+#	elseif (istep==false||jstep==false)&&mod(t,2)==1#If i,j,k are at integer steps and t is odd 
 		ret=OHVal#Compute the EStep on these points (i,j,k are )
 	end
  	return ret
+end
+
+function visualizeOppBC()
+	println([OppBC(i,j,1,1) for i=1:xSteps, j=1:ySteps, k=1:zSteps])
+	println([OppBC(i,j,1,2) for i=1:xSteps, j=1:ySteps, k=1:zSteps])
 end
 
 function isWall(i,j,k,t)
@@ -55,8 +78,6 @@ function isWall(i,j,k,t)
 	end 
 end
 
-function setSources(i,j,k,t)
-
 
 function PECWallBC(i,j,k,t)
 	if i==1||i==size(FDS,1)
@@ -66,21 +87,33 @@ function PECWallBC(i,j,k,t)
 	elseif k==1||j==size(FDS,3)
 		return 3
 	end	
+end
 
 function MatBC(i,j,k,t)
+	epp=8.854187817*10.0^(-12)
+	mu=4*pi*10.0^(-7)
+#	epp=1
+#	mu=1
+	magLoss=0
+	sigma=0
 	return (epp, mu, magLoss, sigma, dx, dy, dz, dt)
+end
 
 function initNullFDS()
 	return "Not done yet"#Totally empty FDS
+end 
 
-simulator = initTEOperator(OppBC, MatBC)
+simulator = createYee2DOperator(OppBC, MatBC)
 
-FDS = initNullFDS()
+#visualizeOppBC()
 
+FDS=zeros(Float64,xSteps, ySteps, zSteps, tDim,3)
+#FDS[500,501,1,2,1]=10000000
+#FDS[25,26,1,2,2]=1
+#FDS[10,10,1,2,2]=10000000
 simTimeSteps = 100000
+#println(FDS)
+FlatTE.simulate(tSteps, sampleRate, FDS, simulator)
 
-simulate(simTimeSteps, 1000, FDS, simulator)
-
-#simulator.Transforms appendSource#Pseudocode
 
 
