@@ -2,7 +2,7 @@
 #This is a simulation of a hard source radiating in a box that is surrounded by a PEC
 #The hard source is a point. It simply varies the electric field according to a function in time.
 #The dimensions of the box are 10cm^3
-
+#Sanjay's Comment
 dx=.01
 dy=.01
 dz=.01
