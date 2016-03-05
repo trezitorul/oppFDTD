@@ -45,9 +45,10 @@ end
 #BC gives the index of the normal direction. This function then sets all of the parallel components equal to zero. 
 #The location and operation of this function is dictated by the master operator BC.
 function EMWall(i,j,k,t,FDS,BC)
-	modT=mod(t,size(FDS,4))+1
- 	for a=1:size(FDS,5)
- 		if a!=BC(i,j,k,t)
+	modT=mod(t,size(FDS,4))+1#The plus one is because mod is zero indexed while the rest of the code is 1 indexed
+ 	for a=1:size(FDS,5)#Goes through the dimensions of FDS
+ 		if a!=BC(i,j,k,t)#The BC contains the normal direction of EMWall and sets the EM parameters parallel to this 
+ 			#wall to zero
 			FDS[i,j,k,modT,a]=0
 		end
 	end
@@ -58,3 +59,14 @@ function Identity(i,j,k,t, FDS, BC)
 	return 0
 end
  
+#Returns boolean if i,j,k,t is on an edge of the grid space.
+function isWall(i,j,k,t)
+	iwall=(i==1||i==size(FDS,1))&&size(FDS,1)!=1#These check to see if we are on a wall and in a dimension that is being used
+	jwall=(j==1||j==size(FDS,2))&&size(FDS,2)!=1#If we did not check dimension size then we would put wall over entire domain.
+	kwall=(k==1||k==size(FDS,3))&&size(FDS,3)!=1#Since over the unused dimension every grid point is a wall point
+	if (iwall||jwall||kwall)
+		return 1
+	else
+		return 0
+	end 
+end

@@ -11,11 +11,9 @@
 #i,j,k,t are all integer arguments, these are the space-time coordinates of the location in FDS being acted on.
 #FDS is the field data structure. It has the following structure FDS[i,j,k,t,parameterxyzdim] 
 #BC is the BC set in the operator calling HSTEP. HSTEP expects BC_ijk=(epsilon,mu,magloss,sigma, dx, dy, dz, dt)
-include("FDTD.jl")
 
 module FlatTM
-using OppFDTD
-export HStep, EStep, initOperator
+export HStep, EStep
 function HStep(i,j,k,t,FDS,BC)
 	sizeFDS=size(FDS,4)#This is the number of time steps that FDS contains (Yee's algorithm only requires 2 previous steps t-1/2 and t-1)
 	#modT=mod(t-1,sizeFDS)+1#The current cyclical timestep to access in FDS (for yee will be either 1 or 2)
@@ -108,17 +106,5 @@ function EStep(i,j,k,t,FDS,BC)
 	#This updates the i,j,k,t E field values in FDS.
 	FDS[i,j,k,modT,3]=Ez
  
-end
-
-#This function creates and returns a composite operator that is used to compute TE wave propagation
-#It requires OppBC an indexed function or object which represents the functional Boundary conditions. 
-#E.G. When is a particular operator applied as compared to another.
-#While MatBC is also an indexed function which takes in i,j,k,t and returns the material properties at that index
-#It returns a tuple of the form (epp, mu, magloss, sigma) 
-#NOTICE, this initializer just creates a master operator, but it does not contain the EMWall or the Identity operator. 
-function initOperator(OppBC,MatBC)
-	OH=operator(HStep,MatBC)#This is the H Field calculating operator
-	OE=operator(EStep,MatBC)#This is the E Field calculating operator, they apply the Steps given above.
-	return operator([OE, OH], OppBC)
 end
 end

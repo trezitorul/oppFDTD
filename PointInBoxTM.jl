@@ -79,15 +79,7 @@ function isWall(i,j,k,t)
 end
 
 
-function PECWallBC(i,j,k,t)
-	if i==1||i==size(FDS,1)
-		return 1
-	elseif j==1||j==size(FDS,2)
-		return 2
-	elseif k==1||j==size(FDS,3)
-		return 3
-	end	
-end
+
 
 function MatBC(i,j,k,t)
 	epp=8.854187817*10.0^(-12)
