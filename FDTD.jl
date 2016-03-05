@@ -24,7 +24,8 @@ export simulate
 function simulate(steps::Int64, sampleRate::Int64, FDS::Array{Float64}, simulator)
 	for t=1:steps#The integer time step. The way the algorithm increments including the time step size is set in the simulator operator
 		if mod(t,sampleRate)==0#Checks to see if it is time to save an FDS snapshot to disk
-			plotEField(FDS)#Saves FDS to disk
+			#plotEField(FDS)#Saves FDS to disk
+			plotHField(FDS)
 		end
 #		println(FDS)
 		for i=1:size(FDS,1)#The x spacial coordinate
